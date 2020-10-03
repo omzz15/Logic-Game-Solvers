@@ -5,6 +5,22 @@ Created on Thu Oct  1 18:53:49 2020
 @author: gauta
 """
 
+class logicGame:
+    def __init__(self, fillers, counters):
+        self.fillers = fillers
+        self.counters = counters
+        
+    def validate(self, **kwargs):
+        cnt = kwargs['count']
+        for c in self.counters:
+            if c.count(**kwargs) >= cnt:
+                return False
+        return True
+    
+    def fill(self, **kwargs):
+        for f in self.fillers:
+            f.fill(**kwargs)
+                
 class Counter:
     
     def count(self, **kwargs):

@@ -19,34 +19,31 @@ def get_park_content():
     tl = [[EMPTY_CHAR]*park_col_cnt for i in park_row_r]
     return tl
 
-class park_game:
+class park_game(game_common.logicGame):
     
     def __init__(self):
-        self.counters = [
+        counters = [
             game_common.CountInARow(),
             game_common.CountInAColumn(),
             game_common.CountInANeighbor(),
             game_common.CountInArea()
         ]
-        self.fillers = [
+        fillers = [
             game_common.FillInARow(),
             game_common.FillInAColumn(),
             game_common.FillInArea(),
             game_common.FillInANeighbor()
             ]
-    
+        super().__init__(fillers, counters)
+        
     def validate(self, g, r, c, locs):
-        args = {'grid': g, 'row': r, 'column': c, 'match_to': TREE_CHAR, 'locations': locs}
-        for c in self.counters:
-            if c.count(**args) >= tree_cnt:
-                return False
-        return True
+        args = {'grid': g, 'row': r, 'column': c, 'match_to': TREE_CHAR, 'locations': locs, 'count': tree_cnt}
+        return super().validate(**args)
     
     def fill(self, g, r, c, locs):
         args = {'grid': g, 'row': r, 'column': c, 'locations': locs,
                 'match_to': EMPTY_CHAR, 'replace_to': UNAVAILABLE_CHAR}
-        for f in self.fillers:
-            f.fill(**args)                
+        super().fill(**args)
     
     def init_park_info(self):
         t = {}
