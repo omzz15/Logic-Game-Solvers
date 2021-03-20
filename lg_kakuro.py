@@ -6,16 +6,17 @@ Created on Fri Dec 18 09:33:58 2020
 """
 import random
 import itertools
+import copy
 
 grid_size = 4
 grange = range(grid_size)
-row_sum = [12,24, 7, 6]
-col_sum = [17,15,13, 4]
+col_sum = [17,21,18, 4]
+row_sum = [17,14,20, 9]
 board = [
-    '...0',
+    '..00',
     '...0',
     '0...',
-    '0...'
+    '00..'
 ]
 
 def plugin_to_row(l, r):
@@ -83,8 +84,8 @@ def get_matching_combinations(b):
     mat_cmbs = [[None]*grid_size for _ in grange]
     for r in grange:
         for c in grange:
-            if b[r][c] == 0: continue
             mat_cmbs[r][c] = []
+            if b[r][c] == 0: continue
             for rc, cc in itertools.product(rcmb[r], ccmb[c]):
                 if rc[c] == cc[r]:
                     mat_cmbs[r][c].append((rc, cc))
@@ -97,7 +98,8 @@ def get_matching_combinations(b):
             for lpi in lp:
                 for lni in ln:
                     if lpi[0] == lni[0]:
-                        print(f'{r}-{c} : {lpi} - {lni}')
+                        pass
+                        #print(f'{r}-{c} : {lpi} - {lni}')
     return mat_cmbs
     
 def is_solved(b, rsum, csum):
@@ -112,6 +114,13 @@ def is_solved(b, rsum, csum):
             return False
     return True
 
+def is_filled(b):
+    for r in grange:
+        for c in grange:
+            if b[r][c] == None:
+                return False
+    return True
+    
 def get_empty_loc(b):
     for r in grange:
         for c in grange:
@@ -128,29 +137,76 @@ def get_possible_value(b, r, c, rsum, csum):
             pv.remove(b[r][i])
     return pv
     
+def get_sorted_comb_list(b, mcmbs):
+    sl = []
+    for r in grange:
+        for c in grange:
+            if b[r][c] == 0 or len(mcmbs[r][c]) == 0: continue
+            sl.append((r, c, len(mcmbs[r][c])))
+    #print(sl)
+    return sorted(sl, key=lambda item: item[2])
+    
+def get_valid_choice(b, mcmbs):
+    sl = get_sorted_comb_list(b, mcmbs)
+    r, c, rc_choice_len = sl[0]
+    #print(f'{r} - {c} : {rc_choice_len}')
+    valid_choice_l = []
+    for achoice in mcmbs[r][c]:
+        is_valid_choice = True
+        for i in grange:
+            if b[r][i] != None and b[r][i] != achoice[0][i]:
+                is_valid_choice = False
+                break
+            if b[i][c] != None and b[i][c] != achoice[1][i]:
+                is_valid_choice = False
+                break
+        if is_valid_choice:
+            for i in grange:
+                if b[r][i] != 0 and len(mcmbs[r][i]) > 0:
+                    fl = list(filter(lambda item: item[0] == achoice[0], mcmbs[r][i]))
+                    if len(fl) == 0:
+                        is_valid_choice = False
+                        break
+                if b[i][c] != 0 and len(mcmbs[i][c]) > 0:
+                    fl = list(filter(lambda item: item[1] == achoice[1], mcmbs[i][c]))
+                    if len(fl) == 0:
+                        is_valid_choice = False
+                        break
+        if is_valid_choice:
+            valid_choice_l.append(achoice)
+    if len(valid_choice_l) == 0:
+        return (None, None, None)
+    else:
+        return (r, c, random.choice(valid_choice_l))
+    
 def solve():
     itr = 1000000
+    b = get_board()
+    mcmbs = get_matching_combinations(b)
     while itr > 0:
-        b = get_board()
-        success, newb = solve_itr(b, row_sum.copy(), col_sum.copy())
+        success, newb = solve_itr(copy.deepcopy(b), copy.deepcopy(mcmbs))
         if success:
             return newb
         itr -= 1
         print(itr)
+        #input()
     return None
 
-def solve_itr(b, rsum, csum):
-    if is_solved(b, rsum, csum): return (True, b)
-    r, c = get_empty_loc(b)
-    if r == None or c == None: return (False, b)
-    pv = get_possible_value(b, r, c, rsum, csum)
-    if len(pv) == 0: return (False, b)
-    val = random.choice(pv)
-    b[r][c] = val
-    rsum[r] -= val
-    csum[c] -= val
-    if rsum[r] < 0 or csum[c] < 0: return (False, b)
-    return solve_itr(b, rsum, csum)
+def solve_itr(b, mcmbs):
+    if is_solved(b, row_sum, col_sum): return (True, b)
+    if is_filled(b): return (False, b)
+    r, c, achoice = get_valid_choice(b, mcmbs)
+    if r == None or c == None or achoice == None:
+        return (False, b)
+    mcmbs[r][c] = list()
+    for i in grange:
+        b[r][i] = achoice[0][i]
+        mcmbs[r][i] = list(filter(lambda item: item[0] == achoice[0], mcmbs[r][i]))
+        b[i][c] = achoice[1][i]
+        mcmbs[i][c] = list(filter(lambda item: item[1] == achoice[1], mcmbs[i][c]))
+    #print(b)
+    #input()
+    return solve_itr(b, mcmbs)
 
-b = get_board()
-mcmbs = get_matching_combinations(b)
+sol = solve()
+print(sol)
