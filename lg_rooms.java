@@ -105,10 +105,6 @@ class Board{
         }
         return true;
     }
-
-    void solveRec(){
-        Node sn = getLeastRank();
-    }
 }
 
 enum Dir{
